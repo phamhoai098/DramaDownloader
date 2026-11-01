@@ -211,7 +211,12 @@
     let currentLanguage = 'vi';
     let currentPage = 1;
     let currentQuery = '';
-    let currentApiBase = localStorage.getItem('drama_api_url') || 'http://localhost:8000';
+    let savedApi = localStorage.getItem('drama_api_url');
+    if (!savedApi || savedApi.includes('localhost') || savedApi.includes('127.0.0.1') || savedApi.includes('192.168.')) {
+      savedApi = 'https://dramadownloader-api.onrender.com';
+      localStorage.setItem('drama_api_url', savedApi);
+    }
+    let currentApiBase = savedApi;
     let currentSeriesDetail = null;
 
     // Register Service Worker
