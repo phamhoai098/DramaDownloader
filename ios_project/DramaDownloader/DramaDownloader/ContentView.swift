@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var isLoading = false
     @State private var searchText = ""
     @State private var selectedLanguage = "vi"
+    @State private var currentPage = 1
     
     let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -22,7 +23,8 @@ struct ContentView: View {
                         ForEach(api.platforms) { p in
                             Button(action: {
                                 selectedPlatform = p.id
-                                loadCatalog()
+                                currentPage = 1
+                                loadCatalog(page: 1)
                             }) {
                                 HStack(spacing: 6) {
                                     Image(systemName: p.icon)
@@ -70,6 +72,56 @@ struct ContentView: View {
                             }
                         }
                         .padding(12)
+                        
+                        // Pagination Bar
+                        HStack(spacing: 16) {
+                            Button(action: {
+                                if currentPage > 1 {
+                                    currentPage -= 1
+                                    loadCatalog(page: currentPage)
+                                }
+                            }) {
+                                HStack {
+                                    Image(systemName: "chevron.left")
+                                    Text("Trang trước")
+                                }
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(currentPage > 1 ? Color(white: 0.2) : Color(white: 0.1))
+                                .foregroundColor(currentPage > 1 ? .white : .gray)
+                                .cornerRadius(10)
+                            }
+                            .disabled(currentPage <= 1)
+                            
+                            Text("Trang \(currentPage)")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(.cyan)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.cyan.opacity(0.15))
+                                .cornerRadius(8)
+                            
+                            Button(action: {
+                                currentPage += 1
+                                loadCatalog(page: currentPage)
+                            }) {
+                                HStack {
+                                    Text("Trang sau")
+                                    Image(systemName: "chevron.right")
+                                }
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(Color.cyan)
+                                .foregroundColor(.black)
+                                .cornerRadius(10)
+                            }
+                        }
+                        .padding(.vertical, 16)
                     }
                 }
             }
@@ -78,7 +130,8 @@ struct ContentView: View {
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "Tìm kiếm phim...")
             .onSubmit(of: .search) {
-                loadCatalog()
+                currentPage = 1
+                loadCatalog(page: 1)
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -88,26 +141,28 @@ struct ContentView: View {
                     }
                     .pickerStyle(.menu)
                     .onChange(of: selectedLanguage) { _ in
-                        loadCatalog()
+                        currentPage = 1
+                        loadCatalog(page: 1)
                     }
                 }
             }
             .onAppear {
                 if items.isEmpty {
-                    loadCatalog()
+                    loadCatalog(page: 1)
                 }
             }
         }
     }
     
-    private func loadCatalog() {
+    private func loadCatalog(page: Int = 1) {
         isLoading = true
         Task {
             do {
                 let fetched = try await api.fetchCatalog(
                     platform: selectedPlatform,
                     language: selectedLanguage,
-                    query: searchText.isEmpty ? nil : searchText
+                    query: searchText.isEmpty ? nil : searchText,
+                    page: page
                 )
                 await MainActor.run {
                     items = fetched

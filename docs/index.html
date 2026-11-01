@@ -91,13 +91,31 @@
   </div>
 
   <!-- Main Catalog Grid -->
-  <main id="catalog-view" class="flex-1 px-3 py-2">
-    <div id="drama-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <!-- Cards rendered via JS -->
+  <main id="catalog-view" class="flex-1 px-3 py-2 flex flex-col justify-between">
+    <div>
+      <div id="drama-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <!-- Cards rendered via JS -->
+      </div>
+      <div id="loading-spinner" class="py-12 flex flex-col items-center justify-center text-slate-400 text-xs space-y-2">
+        <div class="w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
+        <p>Đang tải danh mục phim...</p>
+      </div>
     </div>
-    <div id="loading-spinner" class="py-12 flex flex-col items-center justify-center text-slate-400 text-xs space-y-2">
-      <div class="w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
-      <p>Đang tải danh mục phim...</p>
+
+    <!-- Pagination Controls (Chuyển trang) -->
+    <div id="pagination-bar" class="mt-6 mb-4 flex items-center justify-between bg-slate-900/90 border border-slate-800 p-2 rounded-2xl">
+      <button id="btn-prev-page" onclick="prevPage()" disabled
+              class="flex items-center space-x-1 px-3 py-2 text-xs font-semibold rounded-xl bg-slate-800 text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed">
+        <span>◀ Trang trước</span>
+      </button>
+      <div class="flex items-center space-x-1.5">
+        <span class="text-xs text-slate-400 font-medium">Trang</span>
+        <span id="lbl-current-page" class="text-xs font-bold text-sky-400 px-2 py-0.5 bg-sky-500/10 border border-sky-500/30 rounded-lg">1</span>
+      </div>
+      <button id="btn-next-page" onclick="nextPage()"
+              class="flex items-center space-x-1 px-3 py-2 text-xs font-semibold rounded-xl bg-sky-500 text-white shadow-md shadow-sky-500/20 active:scale-95 transition-transform">
+        <span>Trang sau ▶</span>
+      </button>
     </div>
   </main>
 
@@ -191,6 +209,8 @@
 
     let currentPlatform = 'dramabox';
     let currentLanguage = 'vi';
+    let currentPage = 1;
+    let currentQuery = '';
     let currentApiBase = localStorage.getItem('drama_api_url') || 'http://localhost:8000';
     let currentSeriesDetail = null;
 
@@ -221,28 +241,51 @@
 
     function selectPlatform(id) {
       currentPlatform = id;
+      currentPage = 1;
       renderPlatformPills();
       loadCatalog();
     }
 
     function changeLanguage() {
       currentLanguage = document.getElementById('select-lang').value;
+      currentPage = 1;
       loadCatalog();
     }
 
     function searchDramas() {
-      const q = document.getElementById('input-search').value.trim();
-      loadCatalog(q);
+      currentQuery = document.getElementById('input-search').value.trim();
+      currentPage = 1;
+      loadCatalog(currentQuery, 1);
     }
 
-    async function loadCatalog(query = '') {
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        loadCatalog(currentQuery, currentPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function nextPage() {
+      currentPage++;
+      loadCatalog(currentQuery, currentPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function loadCatalog(query = currentQuery, page = currentPage) {
       const spinner = document.getElementById('loading-spinner');
       const grid = document.getElementById('drama-grid');
+      const btnPrev = document.getElementById('btn-prev-page');
+      const lblPage = document.getElementById('lbl-current-page');
+
+      if (lblPage) lblPage.innerText = page;
+      if (btnPrev) btnPrev.disabled = (page <= 1);
+
       spinner.classList.remove('hidden');
       grid.innerHTML = '';
 
       try {
-        const url = `${currentApiBase}/api/catalog?platform=${currentPlatform}&lang=${currentLanguage}${query ? `&q=${encodeURIComponent(query)}` : ''}`;
+        const url = `${currentApiBase}/api/catalog?platform=${currentPlatform}&lang=${currentLanguage}&page=${page}${query ? `&q=${encodeURIComponent(query)}` : ''}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('Không thể tải từ máy chủ');
         const data = await res.json();
