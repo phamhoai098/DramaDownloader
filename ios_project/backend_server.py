@@ -92,7 +92,9 @@ class DramaAPIHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         sys.stderr.write(f"[{self.log_date_time_string()}] {format % args}\n")
 
-def run_server(port: int = 8000):
+def run_server(port: int = None):
+    if port is None:
+        port = int(os.environ.get('PORT', 8000))
     server_address = ('0.0.0.0', port)
     httpd = HTTPServer(server_address, DramaAPIHandler)
     print("=====================================================")
