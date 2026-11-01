@@ -55,10 +55,7 @@
         <img src="apple-touch-icon.png" alt="Logo" class="w-full h-full object-cover">
       </div>
       <div>
-        <h1 class="text-sm font-bold text-sky-400 tracking-wide flex items-center space-x-1.5">
-          <span>DramaStream</span>
-          <span class="text-[9px] bg-red-500/20 text-red-400 border border-red-500/30 px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider animate-pulse">Live</span>
-        </h1>
+        <h1 class="text-sm font-bold text-sky-400 tracking-wide">DramaStream</h1>
         <p class="text-[10px] text-slate-400">Xem Phim Ngắn Trực Tuyến</p>
       </div>
     </div>
@@ -232,7 +229,7 @@
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=7').catch(console.error);
+      navigator.serviceWorker.register('sw.js?v=8').catch(console.error);
     }
 
     function init() {
