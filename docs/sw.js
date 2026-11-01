@@ -1,53 +1,17 @@
-const CACHE_NAME = 'drama-pwa-v4';
-const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './apple-touch-icon.png',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
-];
-
+// DramaDownloader Live Service Worker
 self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
+  // Clear all previous caches
   e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((k) => {
-          if (k !== CACHE_NAME) return caches.delete(k);
-        })
-      );
-    })
+    caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
   );
   self.clients.claim();
 });
 
-// Network-first strategy for index.html to guarantee instant updates
+// Always fetch latest files from network, no aggressive caching
 self.addEventListener('fetch', (e) => {
-  if (e.request.url.includes('/api/')) {
-    return;
-  }
-  
-  if (e.request.mode === 'navigate' || e.request.url.endsWith('index.html') || e.request.url.endsWith('/')) {
-    e.respondWith(
-      fetch(e.request)
-        .then((res) => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
-          return res;
-        })
-        .catch(() => caches.match(e.request))
-    );
-    return;
-  }
-
-  e.respondWith(
-    caches.match(e.request).then((res) => res || fetch(e.request))
-  );
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
