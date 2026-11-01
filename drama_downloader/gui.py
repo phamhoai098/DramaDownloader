@@ -1362,8 +1362,8 @@ class DramaDownloaderWindow(QMainWindow):
 
         f_layout.addWidget(QLabel("Phụ đề / Subtitle:"))
         self.combo_cat_lang = QComboBox()
-        self.combo_cat_lang.addItem("🇻🇳 Phụ đề (VI)", "vi")
-        self.combo_cat_lang.addItem("🇬🇧 Subtitle (EN)", "en")
+        self.combo_cat_lang.addItem("🇻🇳 VI", "vi")
+        self.combo_cat_lang.addItem("🇬🇧 EN", "en")
         self.combo_cat_lang.currentIndexChanged.connect(self._on_language_changed)
         f_layout.addWidget(self.combo_cat_lang)
 

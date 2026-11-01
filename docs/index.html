@@ -62,8 +62,8 @@
     <div class="flex items-center space-x-1.5">
       <label id="lbl-lang-sub" for="select-lang" class="text-[11px] font-semibold text-slate-400 whitespace-nowrap">Phụ đề:</label>
       <select id="select-lang" onchange="changeLanguage()" class="bg-slate-800 text-xs text-sky-300 border border-slate-700 rounded-lg px-2 py-1 outline-none font-medium cursor-pointer">
-        <option value="vi">🇻🇳 Phụ đề (VI)</option>
-        <option value="en">🇬🇧 Subtitle (EN)</option>
+        <option value="vi">🇻🇳 VI</option>
+        <option value="en">🇬🇧 EN</option>
       </select>
     </div>
   </header>
@@ -229,7 +229,7 @@
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=5').catch(console.error);
+      navigator.serviceWorker.register('sw.js?v=6').catch(console.error);
     }
 
     function init() {

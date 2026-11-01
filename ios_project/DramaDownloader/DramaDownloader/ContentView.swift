@@ -140,8 +140,8 @@ struct ContentView: View {
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.secondary)
                         Picker("Phụ đề / Subtitle", selection: $selectedLanguage) {
-                            Text("🇻🇳 Phụ đề (VI)").tag("vi")
-                            Text("🇬🇧 Subtitle (EN)").tag("en")
+                            Text("🇻🇳 VI").tag("vi")
+                            Text("🇬🇧 EN").tag("en")
                         }
                         .pickerStyle(.menu)
                     }
