@@ -2,10 +2,16 @@ name: Build iOS IPA
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'ios_project/**'
+      - '.github/workflows/build_ios.yml'
 
 jobs:
   build-ipa:
     runs-on: macos-14
+    permissions:
+      contents: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -20,9 +26,22 @@ jobs:
           chmod +x ios_project/build_ipa.sh
           ./ios_project/build_ipa.sh
 
+      - name: Copy IPA to Docs for Direct OTA Web Install
+        run: |
+          mkdir -p docs/install
+          cp ios_project/dist_ios/DramaDownloader.ipa docs/install/DramaDownloader.ipa
+          echo "IPA copied to docs/install successfully"
+
+      - name: Commit & Push IPA to GitHub Pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/install/DramaDownloader.ipa
+          git commit -m "chore: Auto-update DramaDownloader.ipa for OTA install [skip ci]" || echo "No changes to commit"
+          git push origin main || echo "Push failed or nothing to push"
+
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DramaDownloader-iOS-IPA
           path: ios_project/dist_ios/DramaDownloader.ipa
-
