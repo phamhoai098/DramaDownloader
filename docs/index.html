@@ -176,14 +176,25 @@
       <button onclick="closePlayerModal()" class="text-sm text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded-lg">✕ Đóng</button>
     </div>
     <div class="w-full max-w-lg aspect-[9/16] max-h-[75vh] bg-black rounded-xl overflow-hidden border border-slate-800 relative flex items-center justify-center">
-      <video id="video-element" controls playsinline webkit-playsinline class="w-full h-full object-contain"></video>
+      <video id="video-element" onended="playNextEpisode()" controls playsinline webkit-playsinline class="w-full h-full object-contain"></video>
     </div>
-    <div class="w-full max-w-lg mt-3 flex justify-between space-x-2">
-      <a id="download-link" href="#" target="_blank" download class="flex-1 py-2 text-center text-xs font-bold bg-sky-500 text-white rounded-xl shadow-lg">
-        📥 Tải Tập Này Về Máy
-      </a>
-      <button onclick="copyStreamURL()" class="px-4 py-2 text-xs font-medium bg-slate-800 text-slate-300 rounded-xl border border-slate-700">
-        📋 Copy Link
+    <div class="w-full max-w-lg mt-3 flex items-center justify-between bg-slate-900/90 border border-slate-800 p-2 rounded-2xl shadow-xl">
+      <button id="player-btn-prev" onclick="playPrevEpisode()"
+              class="flex items-center space-x-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-800 text-slate-200 border border-slate-700 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed">
+        <span>⏮</span>
+        <span id="player-lbl-prev">Tập trước</span>
+      </button>
+
+      <div class="flex flex-col items-center px-2">
+        <span id="player-lbl-current" class="text-xs font-bold text-sky-400 bg-sky-500/10 border border-sky-500/30 px-3 py-1 rounded-xl">
+          Tập 1
+        </span>
+      </div>
+
+      <button id="player-btn-next" onclick="playNextEpisode()"
+              class="flex items-center space-x-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-sky-500 text-white shadow-md shadow-sky-500/20 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed">
+        <span id="player-lbl-next">Tập tiếp theo</span>
+        <span>⏭</span>
       </button>
     </div>
   </div>
@@ -233,7 +244,7 @@
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=2').catch(console.error);
+      navigator.serviceWorker.register('sw.js?v=3').catch(console.error);
     }
 
     function init() {
@@ -435,27 +446,70 @@
       document.getElementById('catalog-view').classList.remove('hidden');
     }
 
+    let currentPlayingIndex = 0;
+
     function playEpisode(index) {
       if (!currentSeriesDetail || !currentSeriesDetail.episodes) return;
-      const ep = currentSeriesDetail.episodes[index];
+      const episodes = currentSeriesDetail.episodes;
+      if (index < 0 || index >= episodes.length) return;
+      
+      const ep = episodes[index];
       const streamUrl = ep.direct_url;
 
       if (!streamUrl) {
-        alert('Tập này đang bị khóa VIP hoặc không có luồng phát.');
+        alert(`Tập ${ep.num} đang bị khóa VIP hoặc chưa có luồng phát trực tiếp.`);
         return;
       }
 
-      document.getElementById('player-title').innerText = `EP${ep.num}: ${ep.title}`;
+      currentPlayingIndex = index;
+      document.getElementById('player-title').innerText = `🎬 EP${ep.num}: ${ep.title}`;
+      
       const video = document.getElementById('video-element');
       video.src = streamUrl;
       video.play();
 
-      document.getElementById('download-link').href = streamUrl;
-      document.getElementById('download-link').setAttribute('download', `EP${ep.num} - ${ep.title}.mp4`);
+      // Update Navigation Buttons: Tập trước (số tập) <tập hiện tại> Tập tiếp theo (số tập)
+      const btnPrev = document.getElementById('player-btn-prev');
+      const lblPrev = document.getElementById('player-lbl-prev');
+      const lblCurrent = document.getElementById('player-lbl-current');
+      const btnNext = document.getElementById('player-btn-next');
+      const lblNext = document.getElementById('player-lbl-next');
+
+      lblCurrent.innerText = `Tập ${ep.num} / ${episodes.length}`;
+
+      if (index > 0) {
+        btnPrev.disabled = false;
+        const prevEp = episodes[index - 1];
+        lblPrev.innerText = `Tập ${prevEp.num}`;
+      } else {
+        btnPrev.disabled = true;
+        lblPrev.innerText = 'Đầu danh sách';
+      }
+
+      if (index < episodes.length - 1) {
+        btnNext.disabled = false;
+        const nextEp = episodes[index + 1];
+        lblNext.innerText = `Tập ${nextEp.num}`;
+      } else {
+        btnNext.disabled = true;
+        lblNext.innerText = 'Hết tập';
+      }
 
       const modal = document.getElementById('player-modal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
+    }
+
+    function playPrevEpisode() {
+      if (currentPlayingIndex > 0) {
+        playEpisode(currentPlayingIndex - 1);
+      }
+    }
+
+    function playNextEpisode() {
+      if (currentSeriesDetail && currentSeriesDetail.episodes && currentPlayingIndex < currentSeriesDetail.episodes.length - 1) {
+        playEpisode(currentPlayingIndex + 1);
+      }
     }
 
     function closePlayerModal() {
