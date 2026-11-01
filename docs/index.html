@@ -60,13 +60,10 @@
       </div>
     </div>
     <div class="flex items-center space-x-2">
-      <select id="select-lang" onchange="changeLanguage()" class="bg-slate-800 text-xs text-sky-300 border border-slate-700 rounded-lg px-2 py-1 outline-none">
+      <select id="select-lang" onchange="changeLanguage()" class="bg-slate-800 text-xs text-sky-300 border border-slate-700 rounded-lg px-2 py-1 outline-none font-medium">
         <option value="vi">🇻🇳 VI</option>
         <option value="en">🇬🇧 EN</option>
       </select>
-      <button onclick="openConfigModal()" class="text-slate-400 hover:text-sky-400 p-1.5 rounded-lg bg-slate-800/80 border border-slate-700">
-        ⚙️
-      </button>
     </div>
   </header>
 
@@ -199,20 +196,7 @@
     </div>
   </div>
 
-  <!-- Settings Modal (Configure Backend API URL) -->
-  <div id="config-modal" class="fixed inset-0 z-50 bg-black/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-5 space-y-4">
-      <h3 class="text-sm font-bold text-sky-400">⚙️ Cấu Hình Địa Chỉ API Backend</h3>
-      <p class="text-xs text-slate-300 leading-relaxed">
-        Nhập địa chỉ máy chủ Python chạy lõi <code class="text-sky-300">backend_server.py</code> (VD: IP Wi-Fi nội bộ máy tính của bạn hoặc server đám mây miễn phí).
-      </p>
-      <input type="text" id="api-url-input" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-sky-300 font-mono outline-none">
-      <div class="flex justify-end space-x-2">
-        <button onclick="closeConfigModal()" class="px-3 py-1.5 text-xs bg-slate-800 text-slate-300 rounded-lg">Hủy</button>
-        <button onclick="saveConfigModal()" class="px-4 py-1.5 text-xs bg-sky-500 text-white font-bold rounded-lg">Lưu Cấu Hình</button>
-      </div>
-    </div>
-  </div>
+
 
   <!-- App Script -->
   <script>
@@ -244,12 +228,12 @@
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=3').catch(console.error);
+      navigator.serviceWorker.register('sw.js?v=4').catch(console.error);
     }
 
     function init() {
       renderPlatformPills();
-      document.getElementById('api-url-input').value = currentApiBase;
+      
       loadCategories();
       loadCatalog();
     }
