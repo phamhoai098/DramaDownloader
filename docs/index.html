@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>DramaDownloader Studio</title>
+  <title>DramaStream - Xem Phim Ngắn Trực Tuyến</title>
 
   <!-- iOS PWA Meta Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="DramaApp">
+  <meta name="apple-mobile-web-app-title" content="DramaStream">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#090d16">
@@ -55,8 +55,11 @@
         <img src="apple-touch-icon.png" alt="Logo" class="w-full h-full object-cover">
       </div>
       <div>
-        <h1 class="text-sm font-bold text-sky-400 tracking-wide">DramaDownloader</h1>
-        <p class="text-[10px] text-slate-400">iOS Web App Studio</p>
+        <h1 class="text-sm font-bold text-sky-400 tracking-wide flex items-center space-x-1.5">
+          <span>DramaStream</span>
+          <span class="text-[9px] bg-red-500/20 text-red-400 border border-red-500/30 px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider animate-pulse">Live</span>
+        </h1>
+        <p class="text-[10px] text-slate-400">Xem Phim Ngắn Trực Tuyến</p>
       </div>
     </div>
     <div class="flex items-center space-x-1.5">
@@ -229,7 +232,7 @@
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=6').catch(console.error);
+      navigator.serviceWorker.register('sw.js?v=7').catch(console.error);
     }
 
     function init() {

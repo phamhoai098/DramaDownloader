@@ -1,7 +1,7 @@
 {
-  "name": "DramaDownloader Studio",
-  "short_name": "DramaApp",
-  "description": "Xem trực tiếp và tải phim ngắn đa nền tảng cho iOS",
+  "name": "DramaStream - Xem Phim Ngắn Trực Tuyến",
+  "short_name": "DramaStream",
+  "description": "Xem phim ngắn trực tuyến chất lượng cao đa nền tảng",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#090d16",

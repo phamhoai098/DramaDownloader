@@ -1,4 +1,4 @@
-const CACHE_NAME = 'drama-pwa-v4';
+const CACHE_NAME = 'dramastream-pwa-v7';
 const ASSETS = [
   './',
   './index.html',
