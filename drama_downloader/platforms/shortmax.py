@@ -5,6 +5,7 @@ Extractor for ShortMax platform.
 """
 
 import re
+import html
 from typing import Optional, List, Dict, Any
 from .base import BasePlatform, GOODBOS_TOKEN
 from ..models import Series, Episode, Subtitle, CatalogResult, CatalogItem
@@ -98,36 +99,70 @@ class ShortMaxPlatform(BasePlatform):
         page: int = 1,
         query: Optional[str] = None,
         category: Optional[str] = None,
+        language: str = "vi",
     ) -> CatalogResult:
+        # Scrape official ShortMax website directly for live catalog & covers
         try:
-            params = {"lang": "en", "code": GOODBOS_TOKEN, "page": page, "size": 30}
-            endpoint = "/search" if query else "/browse"
-            if query:
-                params["keyword"] = query
-            if category:
-                params["category"] = category
-
-            resp = self.http.get(f"{self.BASE_URL}{endpoint}", params=params)
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+            resp = self.http.get("https://www.shortmax.com", headers=headers, timeout=12)
             if resp.status_code == 200:
-                data = resp.json().get("data") or {}
-                items_raw = data.get("list") or data.get("items") or []
+                text = resp.text
+                matches = list(re.finditer(r'''href=['"](/drama/[^'"]+)['"]''', text))
+                seen = set()
                 items = []
-                for item in items_raw:
-                    sid = str(item.get("id") or item.get("code") or "")
+                q_lower = query.lower().strip() if query else None
+
+                for m in matches:
+                    link = m.group(1)
+                    if link in seen:
+                        continue
+                    seen.add(link)
+
+                    slug = link.replace("/drama/", "").strip()
+                    m_id = re.search(r"-(\d+)$", slug)
+                    sid = m_id.group(1) if m_id else slug
+
+                    window = text[max(0, m.start() - 600):min(len(text), m.end() + 600)]
+
+                    title = ""
+                    t_m = re.search(r'''class=['"][^'"]*(?:card-title|hero-title)[^'"]*['"][^>]*>([^<]+)''', window)
+                    if t_m:
+                        title = html.unescape(t_m.group(1)).strip()
+                    else:
+                        title = slug.replace("-", " ").title()
+
+                    if q_lower and q_lower not in title.lower():
+                        continue
+
+                    img_m = re.search(r'''(?:src|data-src)=['"](https://[^'"]*shorttv\.live[^'"]*)['"]''', window)
+                    cover = img_m.group(1) if img_m else ""
+                    if "&amp;" in cover:
+                        cover = cover.replace("&amp;", "&")
+
                     items.append(
                         CatalogItem(
                             id=sid,
-                            name=item.get("name") or item.get("title") or "",
-                            cover=item.get("cover") or "",
-                            episodes=item.get("episode_count") or item.get("episodes") or 0,
-                            desc=item.get("summary") or item.get("desc") or "",
-                            link=f"https://www.shortmax.com/drama/{sid}",
+                            name=title,
+                            cover=cover,
+                            episodes=80,
+                            desc="ShortMax Original Drama",
+                            link=f"https://www.shortmax.com{link}",
                             platform=self.platform_id,
                         )
                     )
-                return CatalogResult(items=items, total=data.get("total", len(items)), platform=self.platform_id)
+
+                page_size = 24
+                total = len(items)
+                start_idx = (page - 1) * page_size
+                paged_items = items[start_idx:start_idx + page_size]
+
+                if paged_items:
+                    return CatalogResult(items=paged_items, total=total, platform=self.platform_id)
         except Exception:
             pass
+
         return CatalogResult(items=[], total=0, platform=self.platform_id)
 
 
