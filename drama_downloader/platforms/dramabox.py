@@ -142,17 +142,18 @@ class DramaBoxPlatform(BasePlatform):
         page: int = 1,
         query: Optional[str] = None,
         category: Optional[str] = None,
+        language: str = "vi",
     ) -> CatalogResult:
         try:
             payload = {
-                "typeTwoId": int(category) if category and category.isdigit() else 0,
+                "typeTwoId": int(category) if category and str(category).isdigit() else 0,
                 "pageNo": page,
                 "pageSize": 30,
             }
             resp = self.http.post(
                 "https://www.webfic.com/webfic/home/browse",
                 json=payload,
-                headers={"Content-Type": "application/json", "pline": "DRAMABOX", "language": "en"},
+                headers={"Content-Type": "application/json", "pline": "DRAMABOX", "language": language or "vi"},
             )
             data = resp.json()
             book_list = data.get("data", {}).get("bookList", [])
@@ -179,3 +180,40 @@ class DramaBoxPlatform(BasePlatform):
             return CatalogResult(items=items, total=total, platform=self.platform_id)
         except Exception:
             return CatalogResult(items=[], total=0, platform=self.platform_id)
+
+    def get_categories(self, language: str = "vi") -> List[Dict[str, str]]:
+        if language == "vi":
+            return [
+                {"id": "0", "name": "🔥 Tất Cả (All)"},
+                {"id": "10134", "name": "⚔️ Chiến Thần"},
+                {"id": "10358", "name": "🗡️ Báo Thù"},
+                {"id": "10431", "name": "💔 Phản Bội"},
+                {"id": "10143", "name": "🔒 Tình Yêu Cưỡng Ép"},
+                {"id": "10145", "name": "💔 Tình Tay Ba"},
+                {"id": "10369", "name": "⚡ Hệ Thống"},
+                {"id": "10130", "name": "🧛 Ma Cà Rồng & Sói"},
+                {"id": "10132", "name": "👑 Quý Tộc Hoàng Gia"},
+                {"id": "10137", "name": "🔥 Vai Chính Nổi Loạn"},
+                {"id": "10371", "name": "👨‍👩‍👧‍👦 Tình Thân"},
+                {"id": "10140", "name": "👠 Phụ Nữ Sự Nghiệp"},
+            ]
+        return [
+            {"id": "0", "name": "🔥 All Dramas"},
+            {"id": "268", "name": "📈 Trending"},
+            {"id": "258", "name": "💰 Billionaire"},
+            {"id": "269", "name": "👑 CEO"},
+            {"id": "260", "name": "⚔️ Revenge"},
+            {"id": "261", "name": "⚡ Counterattack"},
+            {"id": "534", "name": "🐺 Werewolves"},
+            {"id": "161", "name": "💕 Romance"},
+            {"id": "263", "name": "⏳ Rebirth"},
+            {"id": "563", "name": "🕶️ Mafia"},
+            {"id": "184", "name": "🏠 Son-in-Law"},
+            {"id": "250", "name": "💍 Marriage"},
+            {"id": "291", "name": "🔮 Fantasy"},
+            {"id": "566", "name": "👠 Cinderella"},
+            {"id": "287", "name": "💎 Sudden Wealth"},
+            {"id": "264", "name": "🔍 Suspense"},
+        ]
+
+

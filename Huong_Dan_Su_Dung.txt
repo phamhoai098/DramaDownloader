@@ -1,0 +1,22 @@
+============================================================
+           DRAMA DOWNLOADER STUDIO - PHIEN BAN EXE
+============================================================
+
+1. GIOI THIEU:
+   Phan mem tai va xem truc tiep phim ngan da nen tang:
+   DramaBox, ShortMax, NetShort, KissKH, HongGuo, GoodShort...
+
+2. HUONG DAN SU DUNG:
+   - Chay truc tiep file: DramaDownloader.exe
+   - Tab 1 'Kham Pha': Duyet danh muc phim theo the loai, 
+     bam vao poster de xem chi tiet, chon tap de phat truc tiep
+     hoac tai tron bo.
+   - Tab 2 'Tai Phim': Dan link hoac ID phim vao o tim kiem
+     de quet danh sach tap va tai ve may.
+   - Tab 3 'Nen Tang': Danh sach 11+ nen tang OTT duoc ho tro.
+
+3. TEP TIN DINH KEM:
+   - DramaDownloader.exe : File chay truc tiep (Standalone)
+   - app_icon.ico        : Bieu tuong ung dung (Windows Icon)
+   - app_logo.png        : Logo thiet ke goc chat luong cao
+============================================================

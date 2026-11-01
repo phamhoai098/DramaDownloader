@@ -40,6 +40,13 @@ class BasePlatform(ABC):
         page: int = 1,
         query: Optional[str] = None,
         category: Optional[str] = None,
+        language: str = "vi",
     ) -> CatalogResult:
         """Retrieves catalog/browse listings if supported by platform."""
         return CatalogResult(items=[], total=0, platform=self.platform_id)
+
+    def get_categories(self, language: str = "vi") -> List[Dict[str, str]]:
+        """Retrieves supported categories / genres for browsing."""
+        return [{"id": "", "name": "🔥 Tất Cả / Trang Chủ (Home)"}]
+
+

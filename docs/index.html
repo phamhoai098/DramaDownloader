@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>DramaDownloader Studio</title>
+
+  <!-- iOS PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DramaApp">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#090d16">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            darkbg: '#090d16',
+            darkcard: '#111827',
+            accent: '#0ea5e9',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* iOS Safe Area Insets */
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-darkbg text-slate-100 font-sans min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-30 bg-darkbg/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <div class="w-8 h-8 rounded-lg overflow-hidden border border-sky-500/50 flex-shrink-0">
+        <img src="apple-touch-icon.png" alt="Logo" class="w-full h-full object-cover">
+      </div>
+      <div>
+        <h1 class="text-sm font-bold text-sky-400 tracking-wide">DramaDownloader</h1>
+        <p class="text-[10px] text-slate-400">iOS Web App Studio</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2">
+      <select id="select-lang" onchange="changeLanguage()" class="bg-slate-800 text-xs text-sky-300 border border-slate-700 rounded-lg px-2 py-1 outline-none">
+        <option value="vi">🇻🇳 VI</option>
+        <option value="en">🇬🇧 EN</option>
+      </select>
+      <button onclick="openConfigModal()" class="text-slate-400 hover:text-sky-400 p-1.5 rounded-lg bg-slate-800/80 border border-slate-700">
+        ⚙️
+      </button>
+    </div>
+  </header>
+
+  <!-- Search Bar -->
+  <div class="px-4 pt-3 pb-1">
+    <div class="relative">
+      <input type="text" id="input-search" placeholder="Tìm tên phim (VD: Boss, Revenge, Love)..."
+             onkeypress="if(event.key==='Enter') searchDramas()"
+             class="w-full bg-slate-800/90 border border-slate-700 rounded-xl pl-9 pr-16 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-500">
+      <span class="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+      <button onclick="searchDramas()" class="absolute right-2 top-1.5 px-2.5 py-1 text-xs bg-sky-500 text-white rounded-lg font-medium">
+        Tìm
+      </button>
+    </div>
+  </div>
+
+  <!-- Platform Pills -->
+  <div class="py-2 px-4">
+    <div id="platform-bar" class="flex space-x-2 overflow-x-auto hide-scrollbar text-xs font-semibold">
+      <!-- Generated via JS -->
+    </div>
+  </div>
+
+  <!-- Main Catalog Grid -->
+  <main id="catalog-view" class="flex-1 px-3 py-2">
+    <div id="drama-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <!-- Cards rendered via JS -->
+    </div>
+    <div id="loading-spinner" class="py-12 flex flex-col items-center justify-center text-slate-400 text-xs space-y-2">
+      <div class="w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
+      <p>Đang tải danh mục phim...</p>
+    </div>
+  </main>
+
+  <!-- Detail Page (Hidden by default) -->
+  <section id="detail-view" class="hidden flex-1 px-4 py-3 space-y-4">
+    <button onclick="closeDetailView()" class="inline-flex items-center space-x-1.5 text-xs text-sky-400 bg-slate-800 px-3 py-1.5 rounded-lg font-medium">
+      <span>⬅ Quay lại</span>
+    </button>
+
+    <div class="flex space-x-3 bg-slate-800/50 border border-slate-700/60 p-3 rounded-2xl">
+      <img id="detail-cover" src="" alt="Cover" class="w-24 h-34 rounded-xl object-cover border border-slate-700 flex-shrink-0">
+      <div class="flex flex-col justify-between py-0.5 overflow-hidden">
+        <div>
+          <h2 id="detail-title" class="text-sm font-bold text-white line-clamp-2"></h2>
+          <div class="flex flex-wrap items-center gap-1.5 mt-1.5 text-[10px]">
+            <span id="detail-platform" class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 font-bold uppercase"></span>
+            <span id="detail-episodes" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold"></span>
+            <span id="detail-score" class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold"></span>
+          </div>
+        </div>
+        <p id="detail-tags" class="text-[11px] text-slate-400 line-clamp-1 mt-1"></p>
+      </div>
+    </div>
+
+    <!-- Synopsis -->
+    <div class="bg-slate-800/30 border border-slate-800 p-3 rounded-xl">
+      <h3 class="text-xs font-bold text-slate-200 mb-1">Tóm tắt nội dung:</h3>
+      <p id="detail-desc" class="text-xs text-slate-300 leading-relaxed"></p>
+    </div>
+
+    <!-- Episode Grid -->
+    <div>
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xs font-bold text-sky-400">Danh sách tập phim:</h3>
+        <span id="detail-status" class="text-[11px] text-slate-400"></span>
+      </div>
+      <div id="episodes-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-2">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Video Player Modal (HTML5 Native iOS Player) -->
+  <div id="player-modal" class="fixed inset-0 z-50 bg-black/95 hidden flex-col items-center justify-center p-3">
+    <div class="w-full max-w-lg flex justify-between items-center mb-2 px-1">
+      <span id="player-title" class="text-xs font-bold text-sky-400 truncate max-w-[80%]"></span>
+      <button onclick="closePlayerModal()" class="text-sm text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded-lg">✕ Đóng</button>
+    </div>
+    <div class="w-full max-w-lg aspect-[9/16] max-h-[75vh] bg-black rounded-xl overflow-hidden border border-slate-800 relative flex items-center justify-center">
+      <video id="video-element" controls playsinline webkit-playsinline class="w-full h-full object-contain"></video>
+    </div>
+    <div class="w-full max-w-lg mt-3 flex justify-between space-x-2">
+      <a id="download-link" href="#" target="_blank" download class="flex-1 py-2 text-center text-xs font-bold bg-sky-500 text-white rounded-xl shadow-lg">
+        📥 Tải Tập Này Về Máy
+      </a>
+      <button onclick="copyStreamURL()" class="px-4 py-2 text-xs font-medium bg-slate-800 text-slate-300 rounded-xl border border-slate-700">
+        📋 Copy Link
+      </button>
+    </div>
+  </div>
+
+  <!-- Settings Modal (Configure Backend API URL) -->
+  <div id="config-modal" class="fixed inset-0 z-50 bg-black/80 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-5 space-y-4">
+      <h3 class="text-sm font-bold text-sky-400">⚙️ Cấu Hình Địa Chỉ API Backend</h3>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Nhập địa chỉ máy chủ Python chạy lõi <code class="text-sky-300">backend_server.py</code> (VD: IP Wi-Fi nội bộ máy tính của bạn hoặc server đám mây miễn phí).
+      </p>
+      <input type="text" id="api-url-input" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-sky-300 font-mono outline-none">
+      <div class="flex justify-end space-x-2">
+        <button onclick="closeConfigModal()" class="px-3 py-1.5 text-xs bg-slate-800 text-slate-300 rounded-lg">Hủy</button>
+        <button onclick="saveConfigModal()" class="px-4 py-1.5 text-xs bg-sky-500 text-white font-bold rounded-lg">Lưu Cấu Hình</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Script -->
+  <script>
+    // Platforms list
+    const PLATFORMS = [
+      { id: 'dramabox', name: 'DramaBox' },
+      { id: 'shortmax', name: 'ShortMax' },
+      { id: 'netshort', name: 'NetShort' },
+      { id: 'goodshort', name: 'GoodShort' },
+      { id: 'freereels', name: 'FreeReels' },
+      { id: 'kisskh', name: 'KissKH' },
+      { id: 'hongguo', name: 'HongGuo' },
+      { id: 'dramawave', name: 'DramaWave' },
+      { id: 'flextv', name: 'FlexTV' }
+    ];
+
+    let currentPlatform = 'dramabox';
+    let currentLanguage = 'vi';
+    let currentApiBase = localStorage.getItem('drama_api_url') || 'http://localhost:8000';
+    let currentSeriesDetail = null;
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(console.error);
+    }
+
+    function init() {
+      renderPlatformPills();
+      document.getElementById('api-url-input').value = currentApiBase;
+      loadCatalog();
+    }
+
+    function renderPlatformPills() {
+      const container = document.getElementById('platform-bar');
+      container.innerHTML = PLATFORMS.map(p => `
+        <button onclick="selectPlatform('${p.id}')"
+                class="px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                  p.id === currentPlatform
+                    ? 'bg-sky-500 text-white shadow-md shadow-sky-500/20'
+                    : 'bg-slate-800/80 text-slate-300 border border-slate-700'
+                }">
+          ${p.name}
+        </button>
+      `).join('');
+    }
+
+    function selectPlatform(id) {
+      currentPlatform = id;
+      renderPlatformPills();
+      loadCatalog();
+    }
+
+    function changeLanguage() {
+      currentLanguage = document.getElementById('select-lang').value;
+      loadCatalog();
+    }
+
+    function searchDramas() {
+      const q = document.getElementById('input-search').value.trim();
+      loadCatalog(q);
+    }
+
+    async function loadCatalog(query = '') {
+      const spinner = document.getElementById('loading-spinner');
+      const grid = document.getElementById('drama-grid');
+      spinner.classList.remove('hidden');
+      grid.innerHTML = '';
+
+      try {
+        const url = `${currentApiBase}/api/catalog?platform=${currentPlatform}&lang=${currentLanguage}${query ? `&q=${encodeURIComponent(query)}` : ''}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Không thể tải từ máy chủ');
+        const data = await res.json();
+        const items = data.items || [];
+
+        if (items.length === 0) {
+          grid.innerHTML = `<div class="col-span-full py-12 text-center text-xs text-slate-400">Không tìm thấy phim nào.</div>`;
+        } else {
+          grid.innerHTML = items.map(item => `
+            <div onclick="showDetail('${encodeURIComponent(JSON.stringify(item))}')"
+                 class="bg-darkcard border border-slate-800/80 rounded-2xl overflow-hidden active:scale-95 transition-transform flex flex-col">
+              <div class="relative w-full aspect-[3/4] bg-slate-900">
+                <img src="${item.cover || ''}" alt="${item.name}" loading="lazy" class="w-full h-full object-cover">
+                ${item.score ? `<span class="absolute top-2 right-2 text-[10px] bg-black/70 text-amber-300 px-1.5 py-0.5 rounded-md font-bold backdrop-blur-sm">⭐ ${item.score}</span>` : ''}
+              </div>
+              <div class="p-2.5 flex-1 flex flex-col justify-between">
+                <h4 class="text-xs font-bold text-slate-100 line-clamp-2">${item.name}</h4>
+                <div class="flex items-center justify-between mt-2 text-[10px] text-sky-400 font-semibold">
+                  <span>🎬 ${item.episodes} tập</span>
+                  <span class="text-slate-400">Xem ngay ➔</span>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        grid.innerHTML = `
+          <div class="col-span-full py-8 px-4 text-center">
+            <p class="text-xs text-rose-400 font-medium">⚠️ Chưa kết nối được API Backend (${currentApiBase})</p>
+            <p class="text-[11px] text-slate-400 mt-1">Bấm vào biểu tượng ⚙️ góc trên để kiểm tra hoặc nhập IP máy tính của bạn.</p>
+          </div>
+        `;
+      } finally {
+        spinner.classList.add('hidden');
+      }
+    }
+
+    async function showDetail(encodedItem) {
+      const item = JSON.parse(decodeURIComponent(encodedItem));
+      document.getElementById('catalog-view').classList.add('hidden');
+      document.getElementById('detail-view').classList.remove('hidden');
+
+      document.getElementById('detail-title').innerText = item.name;
+      document.getElementById('detail-cover').src = item.cover || '';
+      document.getElementById('detail-platform').innerText = item.platform || currentPlatform;
+      document.getElementById('detail-episodes').innerText = `${item.episodes} tập`;
+      document.getElementById('detail-score').innerText = item.score ? `⭐ ${item.score}` : '⭐ 9.8';
+      document.getElementById('detail-tags').innerText = item.tags && item.tags.length ? `Thể loại: ${item.tags.join(', ')}` : '';
+      document.getElementById('detail-desc').innerText = item.desc || 'Đang tải tóm tắt nội dung...';
+
+      const epGrid = document.getElementById('episodes-grid');
+      const statusLbl = document.getElementById('detail-status');
+      epGrid.innerHTML = '';
+      statusLbl.innerText = '⏳ Đang quét danh sách tập...';
+
+      try {
+        const target = item.link || item.id;
+        const res = await fetch(`${currentApiBase}/api/inspect?url=${encodeURIComponent(target)}&platform=${item.platform || currentPlatform}`);
+        if (!res.ok) throw new Error('Failed');
+        const detail = await res.json();
+        currentSeriesDetail = detail;
+
+        if (detail.description) {
+          document.getElementById('detail-desc').innerText = detail.description;
+        }
+
+        const episodes = detail.episodes || [];
+        statusLbl.innerText = `Đã nạp ${episodes.length} tập:`;
+
+        epGrid.innerHTML = episodes.map((ep, idx) => {
+          const isLocked = ep.locked && !ep.direct_url;
+          return `
+            <button onclick="playEpisode(${idx})"
+                    class="py-2 px-1 text-center rounded-xl border text-xs font-semibold transition-all ${
+                      isLocked
+                        ? 'bg-slate-900 border-slate-800 text-slate-500 cursor-not-allowed'
+                        : 'bg-slate-800 border-sky-500/30 text-sky-300 hover:bg-sky-500 hover:text-white'
+                    }" ${isLocked ? 'disabled' : ''}>
+              Tập ${ep.num} ${isLocked ? '🔒' : ''}
+            </button>
+          `;
+        }).join('');
+
+      } catch (err) {
+        statusLbl.innerText = '⚠️ Không thể nạp tập phim';
+      }
+    }
+
+    function closeDetailView() {
+      document.getElementById('detail-view').classList.add('hidden');
+      document.getElementById('catalog-view').classList.remove('hidden');
+    }
+
+    function playEpisode(index) {
+      if (!currentSeriesDetail || !currentSeriesDetail.episodes) return;
+      const ep = currentSeriesDetail.episodes[index];
+      const streamUrl = ep.direct_url;
+
+      if (!streamUrl) {
+        alert('Tập này đang bị khóa VIP hoặc không có luồng phát.');
+        return;
+      }
+
+      document.getElementById('player-title').innerText = `EP${ep.num}: ${ep.title}`;
+      const video = document.getElementById('video-element');
+      video.src = streamUrl;
+      video.play();
+
+      document.getElementById('download-link').href = streamUrl;
+      document.getElementById('download-link').setAttribute('download', `EP${ep.num} - ${ep.title}.mp4`);
+
+      const modal = document.getElementById('player-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closePlayerModal() {
+      const modal = document.getElementById('player-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      const video = document.getElementById('video-element');
+      video.pause();
+      video.src = '';
+    }
+
+    function copyStreamURL() {
+      const video = document.getElementById('video-element');
+      if (video.src) {
+        navigator.clipboard.writeText(video.src).then(() => {
+          alert('✔ Đã copy link phát trực tiếp vào bộ nhớ tạm!');
+        });
+      }
+    }
+
+    function openConfigModal() {
+      document.getElementById('config-modal').classList.remove('hidden');
+      document.getElementById('config-modal').classList.add('flex');
+    }
+
+    function closeConfigModal() {
+      document.getElementById('config-modal').classList.add('hidden');
+      document.getElementById('config-modal').classList.remove('flex');
+    }
+
+    function saveConfigModal() {
+      const input = document.getElementById('api-url-input').value.trim().replace(/\/$/, '');
+      if (input) {
+        currentApiBase = input;
+        localStorage.setItem('drama_api_url', input);
+        closeConfigModal();
+        loadCatalog();
+      }
+    }
+
+    // Run
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
+

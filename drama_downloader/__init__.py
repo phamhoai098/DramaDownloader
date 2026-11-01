@@ -15,6 +15,7 @@ from .platforms import (
 )
 from .client import http, HttpClient
 from .crypto import sign_dramabox, derive_content_key, decrypt_spade_url
+from .gui import run_gui
 
 __version__ = "1.0.0"
 __all__ = [
@@ -36,4 +37,6 @@ __all__ = [
     "sign_dramabox",
     "derive_content_key",
     "decrypt_spade_url",
+    "run_gui",
 ]
+

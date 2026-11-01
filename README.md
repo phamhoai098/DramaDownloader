@@ -79,9 +79,36 @@ cd DramaDownloader
 
 # Cài đặt dependencies và module
 pip install -e .
+pip install PyQt6 pillow
 ```
 
 ---
+
+## 🖥️ Giao diện Đồ họa Trực quan (GUI Studio)
+
+Drama Downloader đi kèm giao diện desktop hiện đại (PyQt6), tối ưu chế độ nền tối (Dark Obsidian), phân luồng mượt mà không đơ giật:
+
+- 📋 **Nhập link tự động:** Hỗ trợ nút dán nhanh từ clipboard và tự động nhận diện nền tảng.
+- 🖼️ **Xem trước bìa phim & thông tin:** Tải ảnh poster bìa, số lượng tập khả dụng, mô tả series.
+- 🎯 **Quản lý danh sách tập thông minh:** Chọn tất cả, bỏ chọn, chỉ chọn tập Free, hoặc chọn dải tập (ví dụ: `1-10, 15, 20-30`).
+- ⚡ **Tiến trình tải thời gian thực:** Đồng hồ đo tốc độ (MB/s), thanh tiến trình tập hiện tại và tổng quan.
+- 🧭 **Tab Khám phá & Catalog:** Tìm kiếm và duyệt phim trực tiếp từ DramaBox & ShortMax ngay trong app.
+
+### Cách khởi động GUI:
+- **Cách 1 (Nhanh nhất trên Windows):** Nhấp đúp vào tệp `Run_App.bat`.
+- **Cách 2:** Chạy lệnh:
+  ```bash
+  python run_app.py
+  ```
+- **Cách 3:** Chạy qua module CLI:
+  ```bash
+  python -m drama_downloader gui
+  # hoặc gõ trực tiếp
+  dramadl
+  ```
+
+---
+
 
 ## 💻 Sử dụng dòng lệnh (CLI)
 

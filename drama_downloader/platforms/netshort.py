@@ -129,3 +129,45 @@ class NetShortPlatform(BasePlatform):
             pass
 
         return episode.direct_url
+
+    def get_catalog(
+        self,
+        page: int = 1,
+        query: Optional[str] = None,
+        category: Optional[str] = None,
+        language: str = "vi",
+    ) -> CatalogResult:
+        try:
+            resp = self.http.get(f"{self.BASE_URL}/home", timeout=10)
+            if resp.status_code == 200:
+                raw_list = resp.json().get("data", {}).get("contentInfos", [])
+                items = []
+                for it in raw_list:
+                    sid = str(it.get("shortPlayId") or "")
+                    name = it.get("shortPlayName") or ""
+                    if query and query.lower() not in name.lower():
+                        continue
+                    cover = it.get("shortPlayCover") or ""
+                    labels = it.get("labelArray") or []
+                    items.append(
+                        CatalogItem(
+                            id=sid,
+                            name=name,
+                            cover=cover,
+                            episodes=0,
+                            tags=labels,
+                            score=it.get("heatScoreShow") or "",
+                            link=f"https://netshort.com/drama/{sid}",
+                            platform=self.platform_id,
+                        )
+                    )
+                return CatalogResult(items=items, total=len(items), platform=self.platform_id)
+        except Exception:
+            pass
+        return CatalogResult(items=[], total=0, platform=self.platform_id)
+
+    def get_categories(self, language: str = "vi") -> List[Dict[str, str]]:
+        return [
+            {"id": "0", "name": "🔥 Thịnh Hành / Trang Chủ"},
+        ]
+

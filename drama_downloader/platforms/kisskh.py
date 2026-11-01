@@ -118,3 +118,51 @@ class KisskhPlatform(BasePlatform):
             pass
 
         return None
+
+    def get_catalog(
+        self,
+        page: int = 1,
+        query: Optional[str] = None,
+        category: Optional[str] = None,
+        language: str = "vi",
+    ) -> CatalogResult:
+        try:
+            if query:
+                endpoint = f"DramaList/Search?q={query}"
+                res = self._request_mirror(endpoint)
+                items_data = res if isinstance(res, list) else []
+            else:
+                order = category if category and str(category).isdigit() else "1"
+                endpoint = f"DramaList/List?page={page}&type=0&order={order}"
+                res = self._request_mirror(endpoint)
+                items_data = res.get("data", []) if isinstance(res, dict) else []
+
+            items = []
+            for item in items_data:
+                sid = str(item.get("id") or "")
+                title = item.get("title") or ""
+                cover = item.get("thumbnail") or item.get("cover") or ""
+                ep_count = item.get("episodesCount") or 0
+                items.append(
+                    CatalogItem(
+                        id=sid,
+                        name=title,
+                        cover=cover,
+                        episodes=ep_count,
+                        score=str(item.get("score") or ""),
+                        desc=item.get("description") or "",
+                        link=f"https://kisskh.co/Drama/?id={sid}",
+                        platform=self.platform_id,
+                    )
+                )
+            return CatalogResult(items=items, total=len(items), platform=self.platform_id)
+        except Exception:
+            return CatalogResult(items=[], total=0, platform=self.platform_id)
+
+    def get_categories(self, language: str = "vi") -> List[Dict[str, str]]:
+        return [
+            {"id": "0", "name": "🔥 Tất Cả / Mới Nhất"},
+            {"id": "1", "name": "📈 Xem Nhiều Nhất"},
+            {"id": "2", "name": "⭐ Đánh Giá Cao"},
+        ]
+

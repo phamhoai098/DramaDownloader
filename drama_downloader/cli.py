@@ -7,6 +7,19 @@ Command-line interface for Drama Downloader.
 import argparse
 import sys
 from typing import List
+
+# Ensure safe UTF-8 output on Windows terminals
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 from .models import Series, Episode
 from .platforms import (
     load_series,
@@ -15,6 +28,7 @@ from .platforms import (
     get_platform,
 )
 from .downloader import DramaDownloader, DownloadProgress
+
 
 
 def parse_range(range_str: str, max_ep: int) -> List[int]:
@@ -128,12 +142,25 @@ def cmd_platforms(args):
     print("=" * 50 + "\n")
 
 
+def cmd_gui(args=None):
+    from .gui import run_gui
+    run_gui()
+
+
 def main():
+    if len(sys.argv) == 1:
+        # Default to GUI when no command-line arguments are provided
+        cmd_gui()
+        return
+
     parser = argparse.ArgumentParser(
         prog="drama_downloader",
         description="Multi-Platform Short Drama Extractor and Downloader Module",
     )
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers = parser.add_subparsers(dest="command", required=False)
+
+    p_gui = subparsers.add_parser("gui", help="Launch Drama Downloader graphical user interface")
+    p_gui.set_defaults(func=cmd_gui)
 
     p_info = subparsers.add_parser("info", help="Inspect series metadata and episode list")
     p_info.add_argument("target", help="URL or Series ID")
@@ -159,8 +186,12 @@ def main():
     p_plat.set_defaults(func=cmd_platforms)
 
     args = parser.parse_args()
-    args.func(args)
+    if hasattr(args, "func"):
+        args.func(args)
+    else:
+        cmd_gui()
 
 
 if __name__ == "__main__":
     main()
+

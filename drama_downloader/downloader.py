@@ -90,12 +90,26 @@ class DramaDownloader:
         concurrency: int = 2,
         client: Optional[HttpClient] = None,
         save_vtt: bool = False,
+        save_thumb: bool = True,
     ):
         self.output_dir = output_dir
         self.concurrency = concurrency
         self.http = client or http
         self.save_vtt = save_vtt
+        self.save_thumb = save_thumb
         os.makedirs(self.output_dir, exist_ok=True)
+
+    def _download_image(self, url: str, target_path: str):
+        """Downloads an image file if target path does not already exist."""
+        if not url or os.path.exists(target_path):
+            return
+        try:
+            resp = self.http.get(url, timeout=10)
+            if resp.status_code == 200 and resp.content:
+                with open(target_path, "wb") as f:
+                    f.write(resp.content)
+        except Exception:
+            pass
 
     def download_episode(
         self,
@@ -139,8 +153,14 @@ class DramaDownloader:
             os.remove(out_path)
         os.rename(part_path, out_path)
 
+        # Download subtitles
         for sub in episode.subs:
             self._download_subtitle(sub, folder, ep_prefix)
+
+        # Download episode thumbnail if requested
+        if self.save_thumb and episode.thumb:
+            thumb_path = os.path.join(folder, f"{ep_prefix} - {clean_title}.jpg")
+            self._download_image(episode.thumb, thumb_path)
 
         return out_path
 
@@ -189,6 +209,23 @@ class DramaDownloader:
         on_episode_error: Optional[Callable[[Episode, Exception], None]] = None,
     ) -> List[str]:
         """Batch downloads multiple episodes in a series using thread pool."""
+        folder = self.output_dir
+        if series.name:
+            folder = os.path.join(self.output_dir, sanitize_filename(series.name))
+            os.makedirs(folder, exist_ok=True)
+
+        # Download series cover & poster image
+        if self.save_thumb and series.cover:
+            cover_path = os.path.join(folder, "cover.jpg")
+            self._download_image(series.cover, cover_path)
+            poster_path = os.path.join(folder, "poster.jpg")
+            if os.path.exists(cover_path) and not os.path.exists(poster_path):
+                import shutil
+                try:
+                    shutil.copy2(cover_path, poster_path)
+                except Exception:
+                    pass
+
         target_episodes = series.episodes
         if episodes_range:
             target_episodes = [ep for ep in target_episodes if ep.num in episodes_range]
@@ -215,3 +252,4 @@ class DramaDownloader:
                         on_episode_error(ep, e)
 
         return completed_paths
+

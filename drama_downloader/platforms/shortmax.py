@@ -129,3 +129,17 @@ class ShortMaxPlatform(BasePlatform):
         except Exception:
             pass
         return CatalogResult(items=[], total=0, platform=self.platform_id)
+
+
+    def get_categories(self, language: str = "vi") -> List[Dict[str, str]]:
+        return [
+            {"id": "", "name": "🔥 Tất Cả (All)"},
+            {"id": "trending", "name": "📈 Thịnh Hành (Trending)"},
+            {"id": "ceo", "name": "👑 Tổng Tài / CEO"},
+            {"id": "revenge", "name": "⚔️ Báo Thù (Revenge)"},
+            {"id": "romance", "name": "💕 Lãng Mạn (Romance)"},
+            {"id": "werewolf", "name": "🐺 Người Sói (Werewolf)"},
+            {"id": "rebirth", "name": "⏳ Trọng Sinh (Rebirth)"},
+        ]
+
+
