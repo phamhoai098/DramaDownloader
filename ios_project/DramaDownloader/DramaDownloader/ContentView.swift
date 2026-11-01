@@ -135,11 +135,16 @@ struct ContentView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Picker("Lang", selection: $selectedLanguage) {
-                        Text("🇻🇳 VI").tag("vi")
-                        Text("🇬🇧 EN").tag("en")
+                    HStack(spacing: 4) {
+                        Text(selectedLanguage == "vi" ? "Phụ đề:" : "Subtitle:")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.secondary)
+                        Picker("Phụ đề / Subtitle", selection: $selectedLanguage) {
+                            Text("🇻🇳 Phụ đề (VI)").tag("vi")
+                            Text("🇬🇧 Subtitle (EN)").tag("en")
+                        }
+                        .pickerStyle(.menu)
                     }
-                    .pickerStyle(.menu)
                     .onChange(of: selectedLanguage) { _ in
                         currentPage = 1
                         loadCatalog(page: 1)
