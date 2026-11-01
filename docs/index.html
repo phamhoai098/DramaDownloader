@@ -230,23 +230,13 @@
     let currentApiBase = savedApi;
     let currentSeriesDetail = null;
 
-    // Auto-update: Force check updates and unregister stale cache
+    // Unregister stale service workers completely to prevent caching and eliminate refresh loops
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        for (let reg of regs) {
-          reg.update();
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (let reg of registrations) {
+          reg.unregister();
         }
       });
-      navigator.serviceWorker.register(`sw.js?t=${Date.now()}`).then(reg => {
-        reg.onupdatefound = () => {
-          const installingWorker = reg.installing;
-          installingWorker.onstatechange = () => {
-            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              window.location.reload();
-            }
-          };
-        };
-      }).catch(console.error);
     }
 
     function init() {
