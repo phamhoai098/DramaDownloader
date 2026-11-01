@@ -90,6 +90,17 @@
     </div>
   </div>
 
+  <!-- Category Pills (Phân loại thể loại phim) -->
+  <div class="px-4 pb-2">
+    <div class="flex items-center justify-between mb-1.5">
+      <span class="text-[11px] font-bold text-sky-400">📂 Thể loại / Danh mục:</span>
+      <span id="active-category-label" class="text-[10px] text-slate-400">🔥 Tất Cả</span>
+    </div>
+    <div id="category-bar" class="flex space-x-1.5 overflow-x-auto hide-scrollbar text-[11px] font-medium">
+      <!-- Generated via JS -->
+    </div>
+  </div>
+
   <!-- Main Catalog Grid -->
   <main id="catalog-view" class="flex-1 px-3 py-2 flex flex-col justify-between">
     <div>
@@ -208,6 +219,7 @@
     ];
 
     let currentPlatform = 'dramabox';
+    let currentCategory = '0';
     let currentLanguage = 'vi';
     let currentPage = 1;
     let currentQuery = '';
@@ -227,6 +239,38 @@
     function init() {
       renderPlatformPills();
       document.getElementById('api-url-input').value = currentApiBase;
+      loadCategories();
+      loadCatalog();
+    }
+
+    async function loadCategories() {
+      const container = document.getElementById('category-bar');
+      try {
+        const res = await fetch(`${currentApiBase}/api/categories?platform=${currentPlatform}&lang=${currentLanguage}`);
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        const categories = data.categories || [];
+        container.innerHTML = categories.map(cat => `
+          <button onclick="selectCategory('${cat.id}', '${cat.name}')"
+                  class="px-2.5 py-1 rounded-lg whitespace-nowrap transition-all ${
+                    cat.id === currentCategory
+                      ? 'bg-sky-500/20 text-sky-300 border border-sky-400 font-bold'
+                      : 'bg-slate-800 text-slate-400 border border-slate-700/70 hover:text-white'
+                  }">
+            ${cat.name}
+          </button>
+        `).join('');
+      } catch (e) {
+        container.innerHTML = `<button class="px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-400 font-bold">🔥 Tất Cả</button>`;
+      }
+    }
+
+    function selectCategory(catId, catName) {
+      currentCategory = catId;
+      currentPage = 1;
+      const lbl = document.getElementById('active-category-label');
+      if (lbl) lbl.innerText = catName;
+      loadCategories();
       loadCatalog();
     }
 
@@ -246,14 +290,20 @@
 
     function selectPlatform(id) {
       currentPlatform = id;
+      currentCategory = '0';
       currentPage = 1;
+      const lbl = document.getElementById('active-category-label');
+      if (lbl) lbl.innerText = '🔥 Tất Cả';
       renderPlatformPills();
+      loadCategories();
       loadCatalog();
     }
 
     function changeLanguage() {
       currentLanguage = document.getElementById('select-lang').value;
+      currentCategory = '0';
       currentPage = 1;
+      loadCategories();
       loadCatalog();
     }
 
@@ -290,7 +340,8 @@
       grid.innerHTML = '';
 
       try {
-        const url = `${currentApiBase}/api/catalog?platform=${currentPlatform}&lang=${currentLanguage}&page=${page}${query ? `&q=${encodeURIComponent(query)}` : ''}`;
+        const catParam = (currentCategory && currentCategory !== '0') ? `&category=${encodeURIComponent(currentCategory)}` : '';
+        const url = `${currentApiBase}/api/catalog?platform=${currentPlatform}&lang=${currentLanguage}&page=${page}${catParam}${query ? `&q=${encodeURIComponent(query)}` : ''}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('Không thể tải từ máy chủ');
         const data = await res.json();

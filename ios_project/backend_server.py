@@ -56,6 +56,13 @@ class DramaAPIHandler(BaseHTTPRequestHandler):
                 ]
                 self._send_json(200, {"platforms": plats})
 
+            elif path == '/api/categories':
+                platform_id = query.get('platform', ['dramabox'])[0]
+                lang = query.get('lang', ['vi'])[0]
+                plat = dd.get_platform(platform_id)
+                cats = plat.get_categories(language=lang) if plat else [{'id': '0', 'name': '🔥 Tất Cả'}]
+                self._send_json(200, {"categories": cats})
+
             elif path == '/api/catalog':
                 platform_id = query.get('platform', ['dramabox'])[0]
                 lang = query.get('lang', ['vi'])[0]
