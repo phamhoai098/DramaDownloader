@@ -5,6 +5,7 @@ Extractor for GoodShort and GoodReels platforms.
 """
 
 import re
+import html
 from typing import Optional, List, Dict, Any
 from .base import BasePlatform, GOODBOS_TOKEN
 from ..models import Series, Episode, Subtitle, CatalogResult, CatalogItem
@@ -133,3 +134,85 @@ class GoodShortPlatform(BasePlatform):
             pass
 
         return None
+
+
+    def get_catalog(
+        self,
+        page: int = 1,
+        query: Optional[str] = None,
+        category: Optional[str] = None,
+        language: str = "vi",
+    ) -> CatalogResult:
+        try:
+            resp = self.http.get(
+                "https://www.goodshort.com",
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
+                timeout=12,
+            )
+            if resp.status_code == 200:
+                text = resp.text
+                matches = list(re.finditer(r'''href=['"](/drama/[^'"]+)['"]''', text))
+                seen = set()
+                items: List[CatalogItem] = []
+                q_lower = query.lower().strip() if query else None
+
+                for m in matches:
+                    link = m.group(1)
+                    if link in seen:
+                        continue
+                    seen.add(link)
+
+                    slug = link.replace("/drama/", "").strip()
+                    m_id = re.search(r"-(\d+)$", slug)
+                    sid = m_id.group(1) if m_id else slug
+
+                    window = text[max(0, m.start() - 500):min(len(text), m.end() + 500)]
+
+                    t_m = re.search(r'''title=['"]([^'"]+)['"]''', window) or re.search(r'''alt=['"]([^'"]+)['"]''', window)
+                    title = html.unescape(t_m.group(1)).strip() if t_m else slug.replace("-", " ").title()
+
+                    if q_lower and q_lower not in title.lower():
+                        continue
+
+                    # Category / tag filter
+                    tag_m = re.search(r'''class=['"][^'"]*book-tag-item[^'"]*['"][^>]*>([^<]+)''', window)
+                    tag = tag_m.group(1).strip() if tag_m else "Drama"
+                    if category and category.lower() not in tag.lower():
+                        continue
+
+                    # Cover
+                    img_m = re.search(r'''(?:src|data-src)=['"](https://[^"'\s]+\.(?:jpg|png|webp|jpeg)[^"'\s]*)['"]''', window)
+                    cover = img_m.group(1) if img_m else "https://www.goodshort.com/public/img/gs-icon.jpg"
+
+                    items.append(
+                        CatalogItem(
+                            id=sid,
+                            name=title,
+                            cover=cover,
+                            episodes=60,
+                            desc=f"GoodShort Original • {tag}",
+                            link=f"https://www.goodshort.com{link}",
+                            platform=self.platform_id,
+                        )
+                    )
+
+                page_size = 20
+                total = len(items)
+                start_idx = (page - 1) * page_size
+                paged = items[start_idx : start_idx + page_size]
+                if paged:
+                    return CatalogResult(items=paged, total=total, platform=self.platform_id)
+        except Exception:
+            pass
+
+        return CatalogResult(items=[], total=0, platform=self.platform_id)
+
+    def get_categories(self, language: str = "vi") -> List[Dict[str, str]]:
+        return [
+            {"id": "", "name": "🔥 Tất Cả (All)"},
+            {"id": "mafia", "name": "🕶️ Mafia / Xã Hội Đen"},
+            {"id": "marriage", "name": "💍 Hôn Nhân Hợp Đồng"},
+            {"id": "sweet", "name": "🍬 Ngọt Ngào (Sweet)"},
+            {"id": "alpha", "name": "🐺 Người Sói (Alpha / Werewolf)"},
+            {"id": "family", "name": "👨‍👩‍👧 Gia Đình (Family)"},
+        ]

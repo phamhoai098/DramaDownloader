@@ -140,3 +140,78 @@ class HongguoPlatform(BasePlatform):
             pass
 
         return None
+
+
+    def get_catalog(
+        self,
+        page: int = 1,
+        query: Optional[str] = None,
+        category: Optional[str] = None,
+        language: str = "vi",
+    ) -> CatalogResult:
+        try:
+            resp = self.http.get(
+                self.BASE_URL,
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
+                timeout=12,
+            )
+            if resp.status_code == 200:
+                m = re.search(r'_ROUTER_DATA\s*=\s*(\{[\s\S]*?\});', resp.text)
+                if m:
+                    data = json.loads(m.group(1))
+                    page_data = data.get("loaderData", {}).get("page", {})
+                    home_sections = page_data.get("homeSections", [])
+                    items: List[CatalogItem] = []
+                    seen = set()
+                    q_lower = query.lower().strip() if query else None
+
+                    for sec in home_sections:
+                        tab_type = sec.get("tab_type", "")
+                        if category and category != "all" and tab_type != category:
+                            continue
+
+                        for v in sec.get("video_list", []):
+                            sid = str(v.get("series_id", ""))
+                            if not sid or sid in seen:
+                                continue
+                            seen.add(sid)
+
+                            title = v.get("series_title") or v.get("title") or f"Drama {sid}"
+                            if q_lower and q_lower not in title.lower():
+                                continue
+
+                            cover = v.get("series_cover") or v.get("cover") or ""
+                            eps = v.get("episode_cnt") or 0
+                            desc_parts = [t.get("name", "") for t in v.get("category_list", []) if t.get("name")]
+                            desc = " / ".join(desc_parts) if desc_parts else "HongGuo Short Drama"
+
+                            items.append(
+                                CatalogItem(
+                                    id=sid,
+                                    name=title,
+                                    cover=cover,
+                                    episodes=eps,
+                                    desc=desc,
+                                    link=f"{self.BASE_URL}/detail?series_id={sid}",
+                                    platform=self.platform_id,
+                                )
+                            )
+
+                    page_size = 20
+                    total = len(items)
+                    start_idx = (page - 1) * page_size
+                    paged = items[start_idx : start_idx + page_size]
+                    if paged:
+                        return CatalogResult(items=paged, total=total, platform=self.platform_id)
+        except Exception:
+            pass
+
+        return CatalogResult(items=[], total=0, platform=self.platform_id)
+
+    def get_categories(self, language: str = "vi") -> List[Dict[str, str]]:
+        return [
+            {"id": "all", "name": "🔥 Tất Cả (All)"},
+            {"id": "human", "name": "🎭 Người Thật (Live Action)"},
+            {"id": "comic", "name": "🎨 Hoạt Hình / Manga (Comic)"},
+            {"id": "ai", "name": "🤖 Phim AI (AI Drama)"},
+        ]

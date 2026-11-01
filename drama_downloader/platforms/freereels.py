@@ -104,3 +104,42 @@ class FreeReelsPlatform(BasePlatform):
             episodes=episodes,
             url=f"https://freereels.app/drama/{fr_key}",
         )
+
+
+    def get_catalog(
+        self,
+        page: int = 1,
+        query: Optional[str] = None,
+        category: Optional[str] = None,
+        language: str = "vi",
+    ) -> CatalogResult:
+        try:
+            from .goodbos_aggregators import DramaWavePlatform
+            dw = DramaWavePlatform(self.http)
+            res = dw.get_catalog(page=page, query=query, category=category, language=language)
+            fr_items = []
+            for it in res.items:
+                fr_items.append(
+                    CatalogItem(
+                        id=it.id,
+                        name=it.name,
+                        cover=it.cover,
+                        episodes=it.episodes,
+                        desc=it.desc,
+                        link=f"https://freereels.app/drama/{it.id}",
+                        platform=self.platform_id,
+                    )
+                )
+            return CatalogResult(items=fr_items, total=res.total, platform=self.platform_id)
+        except Exception:
+            pass
+
+        return CatalogResult(items=[], total=0, platform=self.platform_id)
+
+    def get_categories(self, language: str = "vi") -> List[Dict[str, str]]:
+        return [
+            {"id": "popular", "name": "🔥 Phổ Biến (Popular)"},
+            {"id": "mafia", "name": "🕶️ Xã Hội Đen (Mafia)"},
+            {"id": "romance", "name": "💕 Tình Cảm (Romance)"},
+            {"id": "billionaire", "name": "💰 Tỷ Phú (Billionaire)"},
+        ]
